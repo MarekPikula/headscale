@@ -2,6 +2,7 @@
 before:
   hooks:
     - go mod tidy -compat=1.20
+    - go mod vendor
 
 release:
   prerelease: auto
@@ -31,18 +32,15 @@ builds:
 
 archives:
   - id: golang-cross
-    builds:
-      - darwin-amd64
-      - darwin-arm64
-      - freebsd-amd64
-      - linux-386
-      - linux-amd64
-      - linux-arm64
-      - linux-arm-5
-      - linux-arm-6
-      - linux-arm-7
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
     format: binary
+
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}_{{ .Version }}"
+  format: tar.gz
+  files:
+    - "vendor/"
 
 nfpms:
   # Configure nFPM for .deb and .rpm releases
@@ -65,7 +63,7 @@ nfpms:
     bindir: /usr/bin
     formats:
       - deb
-      - rpm
+      # - rpm
     contents:
       - src: ./config-example.yaml
         dst: /etc/headscale/config.yaml
